@@ -44,16 +44,23 @@
     __typeof__ (b) _b = (b); \
     _a < _b ? _a : _b; })
 
-
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-function"
 KHASH_MAP_INIT_STR(str, int);
-#define __pointer_hash(x) (uintptr_t)(x)
+#pragma clang diagnostic pop
+
+#define __pointer_hash(x) (khint_t)(x)
 #define __pointer_equal(x, y) (x == y)
+
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-function"
 KHASH_INIT(score, htmlNodePtr, float, 1, __pointer_hash, __pointer_equal);
+#pragma clang diagnostic pop
 
 #ifdef READABLE_USE_LIBICU
 UChar *uastrdup(const char *s)
 {
-    int len = strlen(s);
+    int len = (int)strlen(s);
     UChar *us = malloc(sizeof(UChar) * (len + 1));
     u_uastrcpy(us, s);
     return us;
@@ -302,7 +309,7 @@ node_inner_html(htmlDocPtr doc, htmlNodePtr node)
     char *html = NULL;
     for (htmlNodePtr cur = node->children; cur; cur = cur->next) {
         char *cur_html = node_html(doc, cur);
-        int len = strlen(cur_html);
+        int len = (int)strlen(cur_html);
         ssize_t available_size = allocated_size - data_size - 1;
         if (len > available_size) {
             while (len > available_size) {
@@ -337,7 +344,7 @@ node_text_len(htmlNodePtr node)
     int len = 0;
     char *inner_text = node_inner_text(node);
     if (inner_text) {
-        len = strlen(inner_text);
+        len = (int)strlen(inner_text);
         free(inner_text);
     }
     return len;
@@ -587,7 +594,7 @@ clean_node_conditionally(htmlNodePtr node, kh_score_t *scores,
     char *node_text = node_inner_text(node);
     if (node_text) {
         commas = number_of_commas(node_text);
-        text_len = strlen(node_text);
+        text_len = (int)strlen(node_text);
         free(node_text);
     }
     if (commas < 10) {
@@ -708,7 +715,7 @@ clean_node(htmlDocPtr doc, htmlNodePtr node, kh_score_t *scores, int options,
         xmlChar *alt = xmlGetProp(node, BAD_CAST "alt");
         xmlChar *title = xmlGetProp(node, BAD_CAST "title");
 #define xlen(x) (x ? strlen((char *)x) : 0)
-        int len = xlen(alt) + xlen(title) + strlen((char *)src);
+        int len = (int)(xlen(alt) + xlen(title) + strlen((char *)src));
         char *test = malloc(len + 1);
         strcpy(test, (char *)src);
         free(src);
@@ -1097,8 +1104,8 @@ style_px_dimensions(xmlChar *style, int *width, int *height)
         if (*wp && *hp) {
             char *wep = NULL;
             char *hep = NULL;
-            *width = strtol(wp, &wep, 10);
-            *height = strtol(hp, &hep, 10);
+            *width = (int)strtol(wp, &wep, 10);
+            *height = (int)strtol(hp, &hep, 10);
             if (wep && hep && *wep == 'p' && *hep == 'p' &&
                 *width && *height) {
 
@@ -1220,7 +1227,7 @@ readable(const char *html, const char *url, const char *encoding, int options)
         if (!inner_text) {
             continue;
         }
-        int text_length = strlen(inner_text);
+        int text_length = (int)strlen(inner_text);
         if (text_length < 25) {
             free(inner_text);
             continue;
@@ -1355,7 +1362,7 @@ readable(const char *html, const char *url, const char *encoding, int options)
         if (xmlStrEqual(cur->name, BAD_CAST "p")) {
             float link_density = node_link_density(cur);
             char *inner_text = node_inner_text(cur);
-            int text_len = inner_text ? strlen(inner_text) : 0;
+            int text_len = inner_text ? (int)strlen(inner_text) : 0;
 
             if (text_len > 80 && link_density < 0.25) {
 #ifdef READABLE_DEBUG
